@@ -9,8 +9,8 @@ import android.content.ContentValues;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    public static final int DATABASE_VERSION = 3;
-    public static final String DATABASE_NAME = "Contact2018.db";
+    public static final int DATABASE_VERSION = 1;
+    public static final String DATABASE_NAME = "Contact2018-2.db";
 
     public static final String TABLE_NAME = "Contact2018_table";
     public static final String ID = "ID";

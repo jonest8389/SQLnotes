@@ -53,13 +53,13 @@ public class MainActivity extends AppCompatActivity {
             showMessage("Error", "No data found in database");
             return;
         }
-
+        Log.d("MyContactApp","MainActivity: lines - " + Integer.toString(res.getCount()));
         StringBuffer buffer = new StringBuffer();
-        for (int i = 0;i < res.getCount();i++){
-            buffer.append(res.getColumnName(i) + "\n");
-            //Append res column 0,1,2,3 to the buffer - see StringBuffer and Cursor api's
-            //Delimit each of the "appends" with line feed "\n"
-        }
+
+        buffer.append(res.getString(0));
+        buffer.append(res.getString(1));
+        buffer.append(res.getString(2));
+        buffer.append(res.getString(3));
 
         showMessage("Data", buffer.toString());
 
