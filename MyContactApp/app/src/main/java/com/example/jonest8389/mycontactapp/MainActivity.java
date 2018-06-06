@@ -34,8 +34,7 @@ public class MainActivity extends AppCompatActivity {
     public void addData(View v){
         Log.d("MyContactApp","MainActivity: Add contact button pressed");
 
-        String insert = editName.getText().toString() + " " + editAddress.getText().toString() + " " + editPhone.getText().toString();
-        boolean isInserted = myDb.insertData(insert);
+        boolean isInserted = myDb.insertData(editName.getText().toString(),editAddress.getText().toString(),editPhone.getText().toString());
 
         if (isInserted) {
             Toast.makeText(MainActivity.this, "Success - contact inserted", Toast.LENGTH_LONG).show();
@@ -56,10 +55,12 @@ public class MainActivity extends AppCompatActivity {
         Log.d("MyContactApp","MainActivity: lines - " + Integer.toString(res.getCount()));
         StringBuffer buffer = new StringBuffer();
 
-        buffer.append(res.getString(0));
-        buffer.append(res.getString(1));
-        buffer.append(res.getString(2));
-        buffer.append(res.getString(3));
+        while (res.moveToNext()) {
+            buffer.append("ID: " + res.getString(0) + "\n");
+            buffer.append("Name: " + res.getString(1) + "\n");
+            buffer.append("Address: " + res.getString(2) + "\n");
+            buffer.append("Phone: " + res.getString(3) + "\n");
+        }
 
         showMessage("Data", buffer.toString());
 

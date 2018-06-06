@@ -10,19 +10,19 @@ import android.content.ContentValues;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     public static final int DATABASE_VERSION = 1;
-    public static final String DATABASE_NAME = "Contact2018-2.db";
+    public static final String DATABASE_NAME = "Contact2018-4.db";
 
     public static final String TABLE_NAME = "Contact2018_table";
     public static final String ID = "ID";
-    public static final String COLUMN_NAME_CONTACT = "name";
-    public static final String COLUMN_ADDRESS_CONTACT = "address";
-    public static final String COLUMN_PHONE_CONTACT = "phone";
+    public static final String COLUMN_NAME_CONTACT = "NAME";
+    public static final String COLUMN_ADDRESS_CONTACT = "ADDRESS";
+    public static final String COLUMN_PHONE_CONTACT = "PHONE";
 
     public static final String SQL_CREATE_ENTRIES =
             "CREATE TABLE " + TABLE_NAME + " (" +
                     ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-                    COLUMN_NAME_CONTACT + " TEXT," + COLUMN_ADDRESS_CONTACT
-                    + " TEXT," + COLUMN_PHONE_CONTACT + " TEXT)";
+                    "NAME" + " TEXT," + "ADDRESS"
+                    + " TEXT," + "PHONE" + " TEXT)";
 
     public static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + TABLE_NAME;
@@ -44,11 +44,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(SQL_DELETE_ENTRIES);
     }
 
-    public boolean insertData(String name){
+    public boolean insertData(String name, String address, String phone){
         Log.d("MyContactApp","DatabaseHelper: inserting data");
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(COLUMN_NAME_CONTACT, name);
+        contentValues.put(COLUMN_ADDRESS_CONTACT, address);
+        contentValues.put(COLUMN_PHONE_CONTACT, phone);
 
         long result = db.insert(TABLE_NAME, null, contentValues);
 
