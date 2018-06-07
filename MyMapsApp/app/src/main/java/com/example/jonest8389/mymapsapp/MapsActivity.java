@@ -2,12 +2,14 @@ package com.example.jonest8389.mymapsapp;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -16,10 +18,12 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -37,6 +41,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private boolean gotMyLocationOneTime;
     private boolean isGPSEnabled = false;
     private boolean isNetworkEnabled = false;
+    private boolean notTrackingMyLocation = true;
 
     private static final long MIN_TIME_BW_UPDATES = 1000*5;
     private static final float MIN_DISTANCE_CHANGE_FOR_UPDATES = 0.0f;
@@ -67,8 +72,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+        LatLng sydney = new LatLng(40, -73);
+        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in New York"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -185,6 +190,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, locationListenerNetwork);
                 }
                 if (isGPSEnabled) {
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                            && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        return;
+                    }
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                            MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, locationListenerGps);
                     //launch locationListenerGPS
                     //Code here..
                 }
@@ -221,7 +232,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
-            Log.d("MyMapsApp","getLocation: status change");
+            Log.d("MyMapsApp","getLocation: network status change");
 
 
         }
@@ -260,6 +271,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
+            switch (status) {
+                case LocationProvider.AVAILABLE:
+                    Log.d("MyMapsApp","getLocation: GPS status change");
+                    break;
+                case LocationProvider.OUT_OF_SERVICE:
+                    if (ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                            && ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        return;
+                    }
+                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                            MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, locationListenerNetwork);
+                    Log.d("MyMapsApp","getLocation: OUT_OF_SERVICE, enabled network");
+                    break;
+                case LocationProvider.TEMPORARILY_UNAVAILABLE:
+                    if (ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                            && ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        return;
+                    }
+                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                            MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, locationListenerNetwork);
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                            MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, locationListenerGps);
+                    Log.d("MyMapsApp","getLocation: TEMPORARILY_UNAVAILABLE, enabled network and GPS");
+                    break;
+                default:
+                    if (ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                            && ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        return;
+                    }
+                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                            MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, locationListenerNetwork);
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                            MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, locationListenerGps);
+                    Log.d("MyMapsApp","getLocation: default, enabled network and GPS");
+                    break;
+            }
 
             //switch (i)
             //case LocationProvider.AVAILABLE:
@@ -288,6 +335,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     };
 
     public void dropAmarker(String provider) {
+        if (locationManager != null) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            myLocation = locationManager.getLastKnownLocation(provider);
+        }
+        LatLng userLocation = null;
+        if (myLocation == null) {
+            Log.d("MyMapsApp","dropAmarker: myLocation is null");
+            Toast.makeText(this,"Location not found!",Toast.LENGTH_SHORT).show();
+        }
+        else {
+            userLocation = new LatLng(myLocation.getLatitude(),myLocation.getLongitude());
+            CameraUpdate update = CameraUpdateFactory.newLatLngZoom(userLocation, MY_LOC_ZOOM_FACTOR);
+            if (provider == LocationManager.GPS_PROVIDER) {
+                mMap.addCircle(new CircleOptions().center(userLocation).radius(1).strokeColor(Color.RED).fillColor(Color.RED));
+            }
+            else {
+                mMap.addCircle(new CircleOptions().center(userLocation).radius(1).strokeColor(Color.BLUE).fillColor(Color.BLUE));
+            }
+            mMap.animateCamera(update);
+        }
         //if(locationManager != null)
         //  if (checkSelfPermission fails)
         //    return
@@ -306,18 +376,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //        .fillColor(Color.RED)
         // else add circle for the marker with 2 outer rings (blue)
         // mMap.animateCamera(update)
-
     }
 
     public void trackMyLocation(View v) {
         //kick off the location tracker using getLocation to start the LocationListeners
         //if (notTrackingMyLocation) {getLocation(); notTrackingMyLocation=false;}
         //else {removeUpdates for both network and gps; notTrackingMyLocation=true;}
+        if (notTrackingMyLocation) {
+            getLocation();
+            notTrackingMyLocation = false;
+        }
+        else {
+            locationManager.removeUpdates(locationListenerGps);
+            locationManager.removeUpdates(locationListenerNetwork);
+            notTrackingMyLocation = true;
+        }
 
     }
 
     public void clearMarkers(View v) {
         //clears markers, look up google maps api
+        mMap.clear();
+    }
+
+    public void changeView(View v) {
+        int mapType = mMap.getMapType() + 1;
+        if (mapType == 5) {
+            mapType = 0;
+        }
+        mMap.setMapType(mapType);
     }
 
     //Add View button and method (changeView) to switch between
